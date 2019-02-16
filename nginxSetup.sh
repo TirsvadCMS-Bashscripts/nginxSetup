@@ -26,21 +26,21 @@ fi
 # Get requiered tools
 case $OS in
     "Debian GNU/Linux")
-        [ ! $(which nslookup &>/dev/null) ] && apt-get install dnsutils 1>/dev/null
-        [ ! $(which certbot &>/dev/null) ] && apt-get install python-certbot-nginx 1>/dev/null
+        [ ! $(which nslookup &>/dev/null) ] && apt-get -qq install dnsutils >/dev/null
+        [ ! $(which certbot &>/dev/null) ] && apt-get -qq install python-certbot-nginx >/dev/null
         ;;
     "Ubuntu")
-        [ ! $(which nslookup &>/dev/null) ] && apt-get install dnsutils 1>/dev/null
-        [ ! $(which certbot &>/dev/null) ] && apt-get install python-certbot-nginx 1>/dev/null
+        [ ! $(which nslookup &>/dev/null) ] && apt-get -qq install dnsutils >/dev/null
+        [ ! $(which certbot &>/dev/null) ] && apt-get -qq install python-certbot-nginx >/dev/null
         ;;
     "CentOS Linux")
         case $OS_VER in
         7)
-            yum -y install epel-release &>/dev/null
+            yum -y install epel-release
             ;;
         esac
-        [ ! $(which nslookup &>/dev/null) ] && yum -y install bind-utils &>/dev/null
-        [ ! $(which certbot &>/dev/null) ] && yum -y install mod_ssl python-certbot-nginx &>/dev/null
+        [ ! $(which nslookup &>/dev/null) ] && yum -y install bind-utils
+        [ ! $(which certbot &>/dev/null) ] && yum -y install mod_ssl python-certbot-nginx
         [ ! $(which firewalld &>/dev/null) ] && {
             [[ ! $(firewall-cmd --list-service | grep -w "http") ]] && firewall-cmd --add-service http
             [[ ! $(firewall-cmd --list-service | grep -w "https") ]] && firewall-cmd --add-service https
@@ -67,15 +67,15 @@ usage() {
 install_nginx() {
     case $OS in
     "Debian GNU/Linux")
-        apt-get install nginx 1>/dev/null
+        apt-get -qq install nginx >/dev/null
         ;;
     "Ubuntu")
-        apt-get install nginx 1>/dev/null
+        apt-get -qq install nginx >/dev/null
         ;;
     "CentOS Linux")
         case $OS_VER in
         7)
-            yum -y install nginx 1>/dev/null
+            yum -y install nginx
             ;;
         *)
             echo "$OS $OS_VER is not supported" 1>&2; exit 1;;

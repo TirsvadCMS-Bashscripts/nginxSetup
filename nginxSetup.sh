@@ -26,21 +26,26 @@ fi
 # Get requiered tools
 case $OS in
     "Debian GNU/Linux")
-        [ ! $(which nslookup) ] && apt-get install dnsutils 1>/dev/null
-        [ ! $(which certbot) ] && apt-get install python-certbot-nginx 1>/dev/null
+        [ ! $(which nslookup &>/dev/null) ] && apt-get install dnsutils 1>/dev/null
+        [ ! $(which certbot &>/dev/null) ] && apt-get install python-certbot-nginx 1>/dev/null
         ;;
     "Ubuntu")
-        [ ! $(which nslookup) ] && apt-get install dnsutils 1>/dev/null
-        [ ! $(which certbot) ] && apt-get install python-certbot-nginx 1>/dev/null
+        [ ! $(which nslookup &>/dev/null) ] && apt-get install dnsutils 1>/dev/null
+        [ ! $(which certbot &>/dev/null) ] && apt-get install python-certbot-nginx 1>/dev/null
         ;;
     "CentOS Linux")
         case $OS_VER in
         7)
-            yum -y install epel-release 1>/dev/null
+            yum -y install epel-release &>/dev/null
             ;;
         esac
-        [ ! $(which nslookup) ] && yum -y install bind-utils 1>/dev/null
-        yum -y install mod_ssl python-certbot-nginx 1>/dev/null
+        [ ! $(which nslookup &>/dev/null) ] && yum -y install bind-utils &>/dev/null
+        [ ! $(which certbot &>/dev/null) ] && yum -y install mod_ssl python-certbot-nginx &>/dev/null
+        [ ! $(which firewalld &>/dev/null) ] && {
+            [[ ! $(firewall-cmd --list-service | grep -w "http") ]] && firewall-cmd --add-service http
+            [[ ! $(firewall-cmd --list-service | grep -w "https") ]] && firewall-cmd --add-service https
+            firewall-cmd --runtime-to-permanent
+        }
         ;;
     *)
         echo "$OS is not supported" 1>&2
@@ -106,8 +111,7 @@ add_domain() {
         [ ! -d $SITES_AVAILABLE_PATH ] && {
             mkdir -p $SITES_AVAILABLE_PATH
             [ ! -d $SITES_ENABLE_PATH ] && mkdir -p $SITES_ENABLE_PATH
-            sed -i "/# Load dynamic modules. See \/usr\/share\/nginx\/README.dynamic./ a include $SITES_ENABLE_PATH*.conf;" /etc/nginx/nginx.conf
-            sed -i "/# Load dynamic modules. See \/usr\/share\/nginx\/README.dynamic./ a include $SITES_AVAILABLE_PATH*.conf;" /etc/nginx/nginx.conf
+            sed -i "/^    include \/etc\/nginx\/conf.d/ a include $SITES_ENABLE_PATH*;" /etc/nginx/nginx.conf
             sed -i '/^    server {/i <start of serverblock>' /etc/nginx/nginx.conf
             sed -i '/# Settings for a TLS enabled server./i <end of serverblock>' /etc/nginx/nginx.conf
             sed -i "/<start of serverblock>/,/<end of serverblock>/d" /etc/nginx/nginx.conf
@@ -125,9 +129,9 @@ add_domain() {
         systemctl reload nginx
         ssl_certificate $DOMAIN $SSL_EMAIL
         cp $DIR_CONF/nginx_domian_ssl.conf $SITES_AVAILABLE_PATH$DOMAIN
-        sed -i -e 's/\$DOMAIN/'"${DOMAIN}"'/g' $SITES_AVAILABLE_PATH$DOMAIN
-        sed -i -e 's/\$ROOT_DIR/'"${$ROOT_DIR}"'/g' $SITES_AVAILABLE_PATH$DOMAIN
-        sed -i -e 's/\$PUBLIC_PATH/'"${$PUBLIC_PATH}"'/g' $SITES_AVAILABLE_PATH$DOMAIN
+        sed -i -e "s/\$DOMAIN/$(echo $DOMAIN | sed -e 's/[\/&]/\\&/g')/g" $SITES_AVAILABLE_PATH$DOMAIN
+        sed -i -e "s/\$ROOT_DIR/$(echo $DOMAIN_ROOT_PATH | sed -e 's/[\/&]/\\&/g')/g" $SITES_AVAILABLE_PATH$DOMAIN
+        sed -i -e "s/\$PUBLIC_PATH/$(echo $PUBLIC_PATH | sed -e 's/[\/&]/\\&/g')/g" $SITES_AVAILABLE_PATH$DOMAIN
         systemctl reload nginx
     }
 }

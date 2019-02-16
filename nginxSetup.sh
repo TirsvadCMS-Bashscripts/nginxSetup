@@ -27,11 +27,11 @@ fi
 case $OS in
     "Debian GNU/Linux")
         [ ! $(which nslookup) ] && apt-get install dnsutils 1>/dev/null
-        [ ! $(which certbot) ] && apt-get install python-certbot-nginx
+        [ ! $(which certbot) ] && apt-get install python-certbot-nginx 1>/dev/null
         ;;
     "Ubuntu")
         [ ! $(which nslookup) ] && apt-get install dnsutils 1>/dev/null
-        [ ! $(which certbot) ] && apt-get install python-certbot-nginx
+        [ ! $(which certbot) ] && apt-get install python-certbot-nginx 1>/dev/null
         ;;
     "CentOS Linux")
         case $OS_VER in
@@ -99,7 +99,7 @@ add_domain() {
     } || {
         TOPDOMAIN=$(echo $DOMAIN | cut -d / -f 3 | cut -d : -f 1 | rev | cut -d . -f 1,2 | rev)
         [ -z $(dig +short $DOMAIN) ] && { echo "$DOMAIN could not be lookup" 1>&2; exit $ERR_CODE_UNKNOWN_DOMAIN_NAME; }
-        [ -z ${SSL_EMAIL:-} ] && { echo "Email not given but required for SSL certificate" 1>&2; exit 1 }
+        [ -z ${SSL_EMAIL:-} ] && { echo "Email not given but required for SSL certificate" 1>&2; exit 1; }
         [ -z ${DOMAIN_ROOT_PATH:-} ] && DOMAIN_ROOT_PATH="$BASE_PATH$TOPDOMAIN/$DOMAIN/"
         [ -z ${PUBLIC_PATH:-} ] && PUBLIC_PATH="public_html/"
         # create directory and add path to nginx.conf (Needed in Centos)
@@ -164,4 +164,6 @@ case "$subcommand" in
         echo "installing nginx"; install_nginx;;
     add)
         echo "installing adding domain"; add_domain;;
+    *)
+        echo "$0: error - unrecognized command option $subcommand" 1>&2; exit $ERR_CODE_UNKNOWN_OPTION;;
 esac
